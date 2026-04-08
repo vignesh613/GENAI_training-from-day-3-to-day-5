@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent Workflow Router</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob shape1"></div>
+        <div class="blob shape2"></div>
+    </div>
+    
+    <div class="container">
+        <h1>Intelligent Router</h1>
+        <p class="subtitle">Type a message to see how LangGraph dynamically routes it based on sentiment analysis.</p>
+        
+        <div class="input-section">
+            <textarea id="queryInput" placeholder="e.g. This product is simply amazing! or The interface is totally broken..."></textarea>
+            <button id="submitBtn" onclick="submitQuery()">Route Message</button>
+        </div>
+        
+        <div id="loading" class="hidden">
+            <div class="spinner"></div>
+            <p>Analyzing sentiment and routing...</p>
+        </div>
+        
+        <div id="result" class="hidden result-card">
+            <div class="result-header">
+                <div class="badge" id="sentimentBadge">NEUTRAL</div>
+                <h3>Branch Taken: <span id="routeTaken">neutral_branch</span></h3>
+            </div>
+            <div class="result-body">
+                <p><strong>Response:</strong> <span id="responseText"></span></p>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
