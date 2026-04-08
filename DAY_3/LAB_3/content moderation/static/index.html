@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrustFlow - AI Content Moderation</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <span class="logo-icon">🛡️</span>
+                <h1>TrustFlow</h1>
+            </div>
+            <nav>
+                <button class="nav-btn active" id="nav-submit" onclick="switchTab('submit')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4"></path></svg>
+                    Submit Content
+                </button>
+                <button class="nav-btn" id="nav-dashboard" onclick="switchTab('dashboard')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    Review Queue
+                </button>
+                <button class="nav-btn" id="nav-all" onclick="switchTab('all')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    All Content
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Submit Tab -->
+            <section id="tab-submit" class="tab-pane active">
+                <header>
+                    <h2>Submit Content</h2>
+                    <p>Enter text to push it through the human-in-the-loop pipeline.</p>
+                </header>
+                <div class="card">
+                    <div class="input-group">
+                        <textarea id="content-input" placeholder="Type something here... e.g. 'This is great!' or 'Buy my spam product'"></textarea>
+                    </div>
+                    <button class="primary-btn" onclick="submitContent()" id="submit-btn">
+                        <span>Submit to Pipeline</span>
+                        <div class="spinner loader-hidden" id="submit-loader"></div>
+                    </button>
+                </div>
+                <div id="submit-result" class="result-message"></div>
+            </section>
+
+            <!-- Dashboard Tab -->
+            <section id="tab-dashboard" class="tab-pane">
+                <header>
+                    <h2>Human Review Queue</h2>
+                    <p>Content flagged by the automated AI filter requires your attention.</p>
+                </header>
+                <div class="queue-container" id="queue-container">
+                    <div class="loader"></div>
+                </div>
+            </section>
+            
+            <!-- All Content Tab -->
+            <section id="tab-all" class="tab-pane">
+                <header>
+                    <h2>Content History</h2>
+                    <p>All submitted content and its current status.</p>
+                </header>
+                <button class="secondary-btn margin-btn" onclick="fetchAllContent()">Refresh History</button>
+                <div class="table-container">
+                    <table id="all-content-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Text snippet</th>
+                                <th>Status</th>
+                                <th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-content-body">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="/static/script.js"></script>
+</body>
+</html>
