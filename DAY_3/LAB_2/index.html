@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipeline Flow | ETL</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --success: #10b981;
+            --error: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Animated background elements */
+        .blob {
+            position: absolute;
+            filter: blur(80px);
+            z-index: 0;
+            opacity: 0.6;
+            animation: float 10s infinite alternate ease-in-out;
+        }
+        .blob-1 {
+            top: -10%; left: -10%;
+            width: 500px; height: 500px;
+            background: rgba(139, 92, 246, 0.4);
+        }
+        .blob-2 {
+            bottom: -10%; right: -10%;
+            width: 400px; height: 400px;
+            background: rgba(56, 189, 248, 0.3);
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(20px) scale(1.05); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 500px;
+            padding: 2rem;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6);
+        }
+
+        h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        p.subtitle {
+            margin: 0 0 2rem 0;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            background: rgba(255,255,255,0.02);
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        #fileInput {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-name {
+            display: block;
+            margin-top: 0.5rem;
+            font-weight: 500;
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 12px;
+            background: var(--primary);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: scale(1.02);
+        }
+
+        .btn:disabled {
+            background: #475569;
+            color: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-container {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 16px;
+            background: rgba(0,0,0,0.2);
+            display: none;
+            border: 1px solid var(--glass-border);
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #eab308;
+            box-shadow: 0 0 10px #eab308;
+        }
+
+        .status-indicator.pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
+        }
+
+        .status-indicator.success { background: var(--success); box-shadow: 0 0 10px var(--success); }
+        .status-indicator.error { background: var(--error); box-shadow: 0 0 10px var(--error); }
+
+        .progress-track {
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--primary);
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+
+        .progress-bar.striped {
+            background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent);
+            background-size: 1rem 1rem;
+            animation: strip 1s linear infinite;
+        }
+
+        @keyframes strip {
+            from { background-position: 1rem 0; }
+            to { background-position: 0 0; }
+        }
+
+        .log-box {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="container">
+        <div class="glass-card">
+            <h1>Data ETL Pipeline</h1>
+            <p class="subtitle">Upload your raw CSV/JSON. Powered by LangGraph & Pandas processing engine.</p>
+
+            <div class="upload-area" id="dropArea">
+                <span class="upload-icon">📄</span>
+                <div>Drag & drop your file here or click to browse</div>
+                <div class="file-name" id="fileNameDisplay"></div>
+                <input type="file" id="fileInput" accept=".csv,.json" />
+            </div>
+
+            <button class="btn" id="triggerBtn" disabled>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                Execute Pipeline
+            </button>
+
+            <div class="status-container" id="statusBox">
+                <div class="status-header">
+                    <div class="status-indicator pulse" id="statusDot"></div>
+                    <span id="statusText">Initializing Handshake...</span>
+                </div>
+                <div class="progress-track" id="progressTrack">
+                    <div class="progress-bar striped" id="progressBar" style="width: 10%;"></div>
+                </div>
+                <div class="log-box" id="logBox">Awaiting server acknowledgement...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const triggerBtn = document.getElementById('triggerBtn');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const dropArea = document.getElementById('dropArea');
+
+        // UI Events for File Selection
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                fileNameDisplay.textContent = e.target.files[0].name;
+                triggerBtn.disabled = false;
+            } else {
+                fileNameDisplay.textContent = '';
+                triggerBtn.disabled = true;
+            }
+        });
+
+        // Drag & Drop visual feedback
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.remove('dragover'), false);
+        });
+
+        dropArea.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length) {
+                fileInput.files = files; // Assign files to input
+                fileInput.dispatchEvent(new Event('change')); // Trigger change event
+            }
+        });
+
+        // Pipeline Logic
+        triggerBtn.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // UI Reset
+            triggerBtn.disabled = true;
+            fileInput.disabled = true;
+            document.getElementById('statusBox').style.display = 'block';
+            updateUI('initializing', 'Uploading file to server...', 20);
+
+            try {
+                // Change endpoint to relative /api/v1/upload because we're serving from same host
+                const req = await fetch(`/api/v1/upload`, { method: 'POST', body: formData });
+                const data = await req.json();
+                
+                if(!req.ok) throw new Error(data.detail || 'Server rejected file upload');
+                
+                pollStatus(data.job_id);
+            } catch (err) {
+                updateUI('error', 'Upload Error', 0, err.message);
+                allowRetry();
+            }
+        });
+
+        function pollStatus(jobId) {
+            updateUI('processing', 'File uploaded. LangGraph processing...', 40);
+
+            const checkCycle = setInterval(async () => {
+                try {
+                    const req = await fetch(`/api/v1/status/${jobId}`);
+                    const metrics = await req.json();
+                    
+                    const statusStr = metrics.status.toUpperCase();
+                    
+                    // Assign rough progress based on state strings
+                    let pValue = 50;
+                    if (statusStr === 'EXTRACTED') pValue = 60;
+                    if (statusStr === 'TRANSFORMED') pValue = 80;
+
+                    updateUI('processing', `Node Active: [${statusStr}]`, pValue);
+
+                    if (metrics.status === 'completed') {
+                        clearInterval(checkCycle);
+                        
+                        // Final results fetch
+                        const resReq = await fetch(`/api/v1/results/${jobId}`);
+                        const resData = await resReq.json();
+
+                        updateUI('success', 'Pipeline ETL Complete 🎉', 100, `Data loaded cleanly into: ${resData.db_table}`);
+                        allowRetry();
+                        
+                    } else if (metrics.status === 'failed') {
+                        clearInterval(checkCycle);
+                        updateUI('error', `Execution Failed at Node [${statusStr}]`, 100, metrics.errors || "Unknown Graph Error");
+                        allowRetry();
+                    }
+                } catch (err) {
+                    clearInterval(checkCycle);
+                    updateUI('error', 'Tracing metrics connection dropped.', 0, err.message);
+                    allowRetry();
+                }
+            }, 1000); // Polling every second
+        }
+
+        function updateUI(state, text, progressPct, logData = '') {
+            const dot = document.getElementById('statusDot');
+            const pBar = document.getElementById('progressBar');
+            const sText = document.getElementById('statusText');
+            const logBox = document.getElementById('logBox');
+
+            sText.textContent = text;
+            pBar.style.width = `${progressPct}%`;
+            
+            if(logData) {
+                logBox.textContent = logData;
+                logBox.style.display = 'block';
+            } else {
+                logBox.style.display = 'none';
+            }
+
+            dot.className = 'status-indicator';
+            pBar.className = 'progress-bar';
+
+            if (state === 'initializing' || state === 'processing') {
+                dot.classList.add('pulse');
+                pBar.classList.add('striped');
+                dot.classList.add('processing');
+                pBar.style.background = 'var(--primary)';
+            } else if (state === 'success') {
+                dot.classList.add('success');
+                pBar.style.background = 'var(--success)';
+            } else if (state === 'error') {
+                dot.classList.add('error');
+                pBar.style.background = 'var(--error)';
+            }
+        }
+
+        function allowRetry() {
+            setTimeout(() => {
+                fileInput.disabled = false;
+                triggerBtn.disabled = false;
+                triggerBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2v6h6M21.5 22v-6h-6M22 11.5A10 10 0 0 0 3.2 7.2M2 12.5a10 10 0 0 0 18.8 4.2"/></svg> Run Another';
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
